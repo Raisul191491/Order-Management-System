@@ -33,14 +33,8 @@ Thumbs.db
 # Logs
 *.log
 
-# Docker files (to avoid recursive copying)
-Dockerfile
-docker-compose.yml
-.dockerignore
-
 # Git
 .git/
-.gitignore
 
 # Documentation
 README.md
