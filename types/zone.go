@@ -3,7 +3,7 @@ package types
 import "time"
 
 type ZoneCreateRequest struct {
-	CityID int64  `json:"city_id" binding:"required" validate:"required"`
+	CityID int64  `json:"cityId" binding:"required" validate:"required"`
 	Name   string `json:"name" binding:"required" validate:"required,max=100"`
 }
 
@@ -16,7 +16,7 @@ type ZoneUpdateRequest struct {
 // ZoneResponse represents the response structure for zone data
 type ZoneResponse struct {
 	ID        int64     `json:"id"`
-	CityID    int64     `json:"city_id"`
+	CityID    int64     `json:"cityId"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
