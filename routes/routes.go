@@ -43,7 +43,7 @@ func InitRoutes(e *gin.Engine) {
 	authHandler := handler.NewAuthHandler(authService)
 	orderHandler := handler.NewOrderHandler(orderService)
 
-	omsRoutes := e.Group("/oms")
+	omsRoutes := e.Group("/api/v1")
 
 	omsRoutes.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})

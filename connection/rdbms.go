@@ -77,10 +77,7 @@ func InitDB(cfg config.Config) (*gorm.DB, *gorm.DB) {
 
 	masterDB.AutoMigrate(&model.MigrationRecord{})
 
-	err = migrations.Migrate(context.Background(), masterDB)
-	if err != nil {
-		log.Fatal(err)
-	}
+	migrations.Migrate(context.Background(), masterDB)
 
 	return masterDB, replicaDB
 }
