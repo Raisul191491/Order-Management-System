@@ -1,3 +1,62 @@
-.git
-.env
-*.idea
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+*.test
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Dependencies
+vendor/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker files (to avoid recursive copying)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+docs/
+
+# Environment files (will be set via docker-compose)
+# .env  # Commented out - we want to include .env in Docker
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Test coverage
+*.out
+coverage.html
+
+# Temporary files
+tmp/
+temp/

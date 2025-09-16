@@ -77,7 +77,10 @@ func InitDB(cfg config.Config) (*gorm.DB, *gorm.DB) {
 
 	masterDB.AutoMigrate(&model.MigrationRecord{})
 
-	migrations.Migrate(context.Background(), masterDB)
+	err = migrations.Migrate(context.Background(), masterDB)
+	if err != nil {
+		log.Fatalf("error running migrations: %v", err)
+	}
 
 	return masterDB, replicaDB
 }
