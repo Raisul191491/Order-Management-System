@@ -3,11 +3,11 @@ package utility
 import "github.com/gin-gonic/gin"
 
 type APIResponse struct {
-	Message string        `json:"message"`
-	Type    string        `json:"type"`
-	Code    int           `json:"code"`
-	Data    interface{}   `json:"data,omitempty"`
-	Errors  []interface{} `json:"errors,omitempty"`
+	Message string      `json:"message"`
+	Type    string      `json:"type"`
+	Code    int         `json:"code"`
+	Data    interface{} `json:"data,omitempty"`
+	Errors  interface{} `json:"errors,omitempty"`
 }
 
 func SendSuccessResponse(ctx *gin.Context, code int, message string, data interface{}) {
@@ -21,7 +21,7 @@ func SendSuccessResponse(ctx *gin.Context, code int, message string, data interf
 	ctx.JSON(code, response)
 }
 
-func SendErrorResponse(ctx *gin.Context, code int, message string, errs []interface{}) {
+func SendErrorResponse(ctx *gin.Context, code int, message string, errs interface{}) {
 	response := APIResponse{
 		Message: message,
 		Type:    "error",

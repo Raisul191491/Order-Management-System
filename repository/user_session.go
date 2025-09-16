@@ -28,7 +28,7 @@ func (r *userSessionRepository) CreateUserSession(session model.UserSession) err
 
 func (r *userSessionRepository) GetUserSessionByAccessToken(accessToken string) (model.UserSession, error) {
 	var session model.UserSession
-	err := r.replicaDb.Where("token_hash = ?", accessToken).First(&session).Error
+	err := r.replicaDb.Where("access_token = ?", accessToken).First(&session).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return model.UserSession{}, fmt.Errorf("user session not found")
@@ -45,7 +45,7 @@ func (r *userSessionRepository) DeleteExpiredSessions() error {
 }
 
 func (r *userSessionRepository) InvalidateSession(accessToken string) error {
-	result := r.masterDb.Where("token_hash = ?", accessToken).Delete(&model.UserSession{})
+	result := r.masterDb.Where("access_token = ?", accessToken).Delete(&model.UserSession{})
 	if result.Error != nil {
 		return result.Error
 	}

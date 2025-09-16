@@ -22,6 +22,7 @@ func InitRoutes(e *gin.Engine) {
 	deliveryTypeRepository := repository.NewDeliveryTypeRepository(masterDB, replicaDB)
 	userRepository := repository.NewUserRepository(masterDB, replicaDB)
 	userSessionRepository := repository.NewUserSessionRepository(masterDB, replicaDB)
+	orderRepository := repository.NewOrderRepository(masterDB, replicaDB)
 
 	cityService := service.NewCityService(cityRepository)
 	storeService := service.NewStoreService(storeRepository)
@@ -30,6 +31,8 @@ func InitRoutes(e *gin.Engine) {
 	deliveryTypeService := service.NewDeliveryTypeService(deliveryTypeRepository)
 	userService := service.NewUserService(userRepository)
 	userSessionService := service.NewUserSessionService(userSessionRepository, config.Conf)
+	authService := service.NewAuthService(userRepository, userSessionService)
+	orderService := service.NewOrderService(orderRepository, storeService, cityService)
 
 	cityHandler := handler.NewCityHandler(cityService)
 	storeHandler := handler.NewStoreHandler(storeService)
@@ -37,6 +40,8 @@ func InitRoutes(e *gin.Engine) {
 	itemTypeHandler := handler.NewItemTypeHandler(itemTypeService)
 	deliveryTypeHandler := handler.NewDeliveryTypeHandler(deliveryTypeService)
 	userHandler := handler.NewUserHandler(userService)
+	authHandler := handler.NewAuthHandler(authService)
+	orderHandler := handler.NewOrderHandler(orderService)
 
 	omsRoutes := e.Group("/oms")
 
@@ -54,7 +59,7 @@ func InitRoutes(e *gin.Engine) {
 		cityRoutes.GET("/name/:name", cityHandler.GetCityByName)
 	}
 
-	storeRoutes := omsRoutes.Group("/stores")
+	storeRoutes := omsRoutes.Group("/stores").Use(middleware.Auth(userSessionService))
 	{
 		storeRoutes.POST("", storeHandler.CreateStore)
 		storeRoutes.GET("", storeHandler.GetAllStores)
@@ -63,7 +68,7 @@ func InitRoutes(e *gin.Engine) {
 		storeRoutes.DELETE("/:id", storeHandler.DeleteStore)
 	}
 
-	zoneRoutes := omsRoutes.Group("/zones")
+	zoneRoutes := omsRoutes.Group("/zones").Use(middleware.Auth(userSessionService))
 	{
 		zoneRoutes.POST("", zoneHandler.CreateZone)
 		zoneRoutes.GET("", zoneHandler.GetAllZones)
@@ -72,7 +77,7 @@ func InitRoutes(e *gin.Engine) {
 		zoneRoutes.DELETE("/:id", zoneHandler.DeleteZone)
 	}
 
-	itemTypeRoutes := omsRoutes.Group("/item-types")
+	itemTypeRoutes := omsRoutes.Group("/item-types").Use(middleware.Auth(userSessionService))
 	{
 		itemTypeRoutes.POST("", itemTypeHandler.CreateItemType)
 		itemTypeRoutes.GET("", itemTypeHandler.GetAllItemTypes)
@@ -81,7 +86,7 @@ func InitRoutes(e *gin.Engine) {
 		itemTypeRoutes.DELETE("/:id", itemTypeHandler.DeleteItemType)
 	}
 
-	deliveryTypeRoutes := omsRoutes.Group("/delivery-types")
+	deliveryTypeRoutes := omsRoutes.Group("/delivery-types").Use(middleware.Auth(userSessionService))
 	{
 		deliveryTypeRoutes.POST("", deliveryTypeHandler.CreateDeliveryType)
 		deliveryTypeRoutes.GET("", deliveryTypeHandler.GetAllDeliveryTypes)
@@ -100,4 +105,23 @@ func InitRoutes(e *gin.Engine) {
 		userRoutes.DELETE("/:id", userHandler.DeleteUser)
 	}
 
+	orderRoutes := omsRoutes.Group("/orders").Use(middleware.Auth(userSessionService))
+	{
+		orderRoutes.POST("", orderHandler.CreateOrder)
+		orderRoutes.GET("/:consignment_id", orderHandler.GetOrderByConsignmentID)
+		orderRoutes.GET("/all", orderHandler.ListAllOrders)
+		orderRoutes.PUT("", orderHandler.UpdateOrder)
+		orderRoutes.DELETE("/:id", orderHandler.DeleteOrder)
+		orderRoutes.POST("/:consignment_id/cancel", orderHandler.CancelOrder)
+	}
+
+	loginRoutes := omsRoutes.Group("/auth")
+	{
+		loginRoutes.POST("/login", authHandler.Login)
+	}
+
+	logoutRoutes := omsRoutes.Group("/auth").Use(middleware.Auth(userSessionService))
+	{
+		logoutRoutes.POST("/logout", authHandler.Logout)
+	}
 }

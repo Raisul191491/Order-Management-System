@@ -1,17 +1,20 @@
 package types
 
+import "time"
+
 type UserLoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
 type UserLoginResponse struct {
-	UserResponse
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	TokenType    string    `json:"token_type"`
 }
 
-type PasswordUpdateRequest struct {
-	OldPassword string `json:"oldPassword" binding:"required,oldPassword"`
-	NewPassword string `json:"newPassword" binding:"required,newPassword"`
+type TokenValidationResponse struct {
+	Valid bool         `json:"valid"`
+	User  UserResponse `json:"user,omitempty"`
 }
