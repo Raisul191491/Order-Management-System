@@ -25,7 +25,7 @@ type ZoneResponse struct {
 // ZonesListResponse represents the response structure for paginated zone lists
 type ZonesListResponse struct {
 	Zones      []ZoneResponse `json:"zones"`
-	TotalCount int64          `json:"total_count"`
+	TotalCount int64          `json:"totalCount"`
 	Limit      int            `json:"limit"`
 	Offset     int            `json:"offset"`
 }

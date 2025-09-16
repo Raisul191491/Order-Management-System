@@ -14,21 +14,13 @@ type ItemTypeUpdateRequest struct {
 type ItemTypeResponse struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type ItemTypesListResponse struct {
-	ItemTypes  []ItemTypeResponse `json:"item_types"`
-	TotalCount int64              `json:"total_count"`
+	ItemTypes  []ItemTypeResponse `json:"itemTypes"`
+	TotalCount int64              `json:"totalCount"`
 	Limit      int                `json:"limit"`
 	Offset     int                `json:"offset"`
-}
-
-type ItemTypeSearchResponse struct {
-	ItemTypes   []ItemTypeResponse `json:"item_types"`
-	SearchTerm  string             `json:"search_term"`
-	ResultCount int                `json:"result_count"`
-	Limit       int                `json:"limit"`
-	Offset      int                `json:"offset"`
 }

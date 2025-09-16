@@ -17,5 +17,5 @@ type CityResponse struct {
 	Id              int64     `json:"id,omitempty"`
 	Name            string    `json:"name"`
 	BaseDeliveryFee float64   `json:"baseDeliveryFee,omitempty"`
-	UpdatedAt       time.Time `json:"updated_at,omitempty"`
+	UpdatedAt       time.Time `json:"updatedAt,omitempty"`
 }
