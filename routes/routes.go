@@ -17,14 +17,17 @@ func InitRoutes(e *gin.Engine) {
 	cityRepository := repository.NewCityRepository(masterDB, replicaDB)
 	storeRepository := repository.NewStoreRepository(masterDB, replicaDB)
 	zoneRepository := repository.NewZoneRepository(masterDB, replicaDB)
+	itemTypeRepository := repository.NewItemTypeRepository(masterDB, replicaDB)
 
 	cityService := service.NewCityService(cityRepository)
 	storeService := service.NewStoreService(storeRepository)
 	zoneService := service.NewZoneService(zoneRepository, cityRepository)
+	itemTypeService := service.NewItemTypeService(itemTypeRepository)
 
 	cityHandler := handler.NewCityHandler(cityService)
 	storeHandler := handler.NewStoreHandler(storeService)
 	zoneHandler := handler.NewZoneHandler(zoneService)
+	itemTypeHandler := handler.NewItemTypeHandler(itemTypeService)
 
 	omsRoutes := e.Group("/oms")
 
@@ -58,6 +61,15 @@ func InitRoutes(e *gin.Engine) {
 		zoneRoutes.GET("/:id", zoneHandler.GetZoneByID)
 		zoneRoutes.PUT("/:id", zoneHandler.UpdateZone)
 		zoneRoutes.DELETE("/:id", zoneHandler.DeleteZone)
+	}
+
+	itemTypeRoutes := omsRoutes.Group("/item_types")
+	{
+		itemTypeRoutes.POST("", itemTypeHandler.CreateItemType)
+		itemTypeRoutes.GET("", itemTypeHandler.GetAllItemTypes)
+		itemTypeRoutes.GET("/:id", itemTypeHandler.GetItemTypeByID)
+		itemTypeRoutes.PUT("/:id", itemTypeHandler.UpdateItemType)
+		itemTypeRoutes.DELETE("/:id", itemTypeHandler.DeleteItemType)
 	}
 
 }
