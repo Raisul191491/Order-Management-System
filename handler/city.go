@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"oms/domain"
 	"oms/types"
+	"oms/utility"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -22,51 +23,51 @@ func NewCityHandler(cityService domain.CityService) *CityHandler {
 func (handler CityHandler) CreateCity(ctx *gin.Context) {
 	var req types.CityCreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "Unable to bind request", []any{err.Error()})
 		return
 	}
 
 	if req.BaseDeliveryFee < 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "base_delivery_fee cannot be negative"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "base_delivery_fee cannot be negative", nil)
 		return
 	}
 
 	err := handler.cityService.CreateCity(req)
 	if err != nil {
 		if err.Error() == "city with name '"+req.Name+"' already exists" {
-			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			utility.SendErrorResponse(ctx, http.StatusConflict, "city with name already exists", []any{err.Error()})
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusInternalServerError, "Unable to create city", []any{err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, "successfully created city")
+	utility.SendSuccessResponse(ctx, http.StatusCreated, "Successfully created city", nil)
 }
 
 func (handler CityHandler) GetCityByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid city ID format"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "Invalid city ID format", []any{err.Error()})
 		return
 	}
 
 	if id <= 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "id should be positive"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "Id should be positive", nil)
 		return
 	}
 
 	response, err := handler.cityService.GetCityByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "city with ID "+idStr+" not found" {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "city not found"})
+			utility.SendErrorResponse(ctx, http.StatusNotFound, "city not found", []any{err.Error()})
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusInternalServerError, "Unable to fetch city", []any{err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, response)
+	utility.SendSuccessResponse(ctx, http.StatusOK, "Successfully fetched city", response)
 }
 
 func (handler CityHandler) GetAllCities(ctx *gin.Context) {
@@ -75,93 +76,88 @@ func (handler CityHandler) GetAllCities(ctx *gin.Context) {
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit parameter"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "invalid limit parameter", nil)
 		return
 	}
 
 	offset, err := strconv.Atoi(offsetStr)
 	if err != nil || offset < 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid offset parameter"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "invalid offset parameter", nil)
 		return
 	}
 
 	responses, err := handler.cityService.GetAllCities(limit, offset)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusInternalServerError, "Unable to fetch cities", []any{err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"data":   responses,
-		"total":  len(responses),
-		"limit":  limit,
-		"offset": offset,
-	})
+	utility.SendSuccessResponse(ctx, http.StatusOK, "Successfully fetched cities", responses)
 }
 
 func (handler CityHandler) UpdateCity(ctx *gin.Context) {
 	var req types.CityUpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "Unable to bind request", []any{err.Error()})
 		return
 	}
 
 	if req.BaseDeliveryFee < 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "base_delivery_fee cannot be negative"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "base_delivery_fee cannot be negative", nil)
 		return
 	}
 
 	err := handler.cityService.UpdateCity(req)
 	if err != nil {
 		if err.Error() == "city with name '"+req.Name+"' already exists" {
-			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			utility.SendErrorResponse(ctx, http.StatusConflict, "city with name already exists", []any{err.Error()})
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusInternalServerError, "Unable to update city", []any{err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, "successfully updated city")
+	utility.SendSuccessResponse(ctx, http.StatusOK, "Successfully updated city", nil)
 }
 
 func (handler CityHandler) DeleteCity(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "Invalid city ID format", []any{err.Error()})
 		return
 	}
 
 	if id <= 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "id should be positive"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "Id should be positive", nil)
 		return
 	}
 
 	err = handler.cityService.DeleteCity(id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusInternalServerError, "Unable to delete city", []any{err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+	utility.SendSuccessResponse(ctx, http.StatusOK, "Successfully deleted city", nil)
 }
 
 func (handler CityHandler) GetCityByName(ctx *gin.Context) {
 	name := ctx.Param("name")
 	if name == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "city name is required"})
+		utility.SendErrorResponse(ctx, http.StatusBadRequest, "City name is required", nil)
 		return
 	}
 
 	response, err := handler.cityService.GetCityByName(name)
 	if err != nil {
 		if err.Error() == "city with name '"+name+"' not found" {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "city not found"})
+			utility.SendErrorResponse(ctx, http.StatusNotFound, "City not found", []any{err.Error()})
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utility.SendErrorResponse(ctx, http.StatusInternalServerError, "Unable to fetch city", []any{err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response)
+	utility.SendSuccessResponse(ctx, http.StatusOK, "Successfully fetched city", response)
 }
