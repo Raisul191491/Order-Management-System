@@ -4,6 +4,7 @@ import (
 	"oms/config"
 	"oms/connection"
 	"oms/handler"
+	"oms/middleware"
 	"oms/repository"
 	"oms/service"
 
@@ -20,6 +21,7 @@ func InitRoutes(e *gin.Engine) {
 	itemTypeRepository := repository.NewItemTypeRepository(masterDB, replicaDB)
 	deliveryTypeRepository := repository.NewDeliveryTypeRepository(masterDB, replicaDB)
 	userRepository := repository.NewUserRepository(masterDB, replicaDB)
+	userSessionRepository := repository.NewUserSessionRepository(masterDB, replicaDB)
 
 	cityService := service.NewCityService(cityRepository)
 	storeService := service.NewStoreService(storeRepository)
@@ -27,6 +29,7 @@ func InitRoutes(e *gin.Engine) {
 	itemTypeService := service.NewItemTypeService(itemTypeRepository)
 	deliveryTypeService := service.NewDeliveryTypeService(deliveryTypeRepository)
 	userService := service.NewUserService(userRepository)
+	userSessionService := service.NewUserSessionService(userSessionRepository, config.Conf)
 
 	cityHandler := handler.NewCityHandler(cityService)
 	storeHandler := handler.NewStoreHandler(storeService)
@@ -41,7 +44,7 @@ func InitRoutes(e *gin.Engine) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	cityRoutes := omsRoutes.Group("/cities")
+	cityRoutes := omsRoutes.Group("/cities").Use(middleware.Auth(userSessionService))
 	{
 		cityRoutes.POST("", cityHandler.CreateCity)
 		cityRoutes.GET("", cityHandler.GetAllCities)

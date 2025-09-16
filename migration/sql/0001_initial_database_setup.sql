@@ -98,7 +98,8 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS user_sessions (
                                id BIGSERIAL PRIMARY KEY,
                                user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-                               token_hash VARCHAR(255) NOT NULL,
+                               access_token VARCHAR(255) NOT NULL,
+                               refresh_token VARCHAR(255) NOT NULL,
                                expires_at TIMESTAMP NOT NULL,
                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
