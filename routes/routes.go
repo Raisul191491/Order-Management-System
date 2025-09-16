@@ -15,10 +15,13 @@ func InitRoutes(e *gin.Engine) {
 	//redis := connection.GetRedis(config.Conf)
 
 	cityRepository := repository.NewCityRepository(masterDB, replicaDB)
+	storeRepository := repository.NewStoreRepository(masterDB, replicaDB)
 
 	cityService := service.NewCityService(cityRepository)
+	storeService := service.NewStoreService(storeRepository)
 
 	cityHandler := handler.NewCityHandler(cityService)
+	storeHandler := handler.NewStoreHandler(storeService)
 
 	omsRoutes := e.Group("/oms")
 
@@ -34,5 +37,14 @@ func InitRoutes(e *gin.Engine) {
 		cityRoutes.PUT("/:id", cityHandler.UpdateCity)
 		cityRoutes.DELETE("/:id", cityHandler.DeleteCity)
 		cityRoutes.GET("/name/:name", cityHandler.GetCityByName)
+	}
+
+	storeRoutes := omsRoutes.Group("/stores")
+	{
+		storeRoutes.POST("", storeHandler.CreateStore)
+		storeRoutes.GET("", storeHandler.GetAllStores)
+		storeRoutes.GET("/:id", storeHandler.GetStoreByID)
+		storeRoutes.PUT("/:id", storeHandler.UpdateStore)
+		storeRoutes.DELETE("/:id", storeHandler.DeleteStore)
 	}
 }
