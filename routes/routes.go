@@ -16,12 +16,15 @@ func InitRoutes(e *gin.Engine) {
 
 	cityRepository := repository.NewCityRepository(masterDB, replicaDB)
 	storeRepository := repository.NewStoreRepository(masterDB, replicaDB)
+	zoneRepository := repository.NewZoneRepository(masterDB, replicaDB)
 
 	cityService := service.NewCityService(cityRepository)
 	storeService := service.NewStoreService(storeRepository)
+	zoneService := service.NewZoneService(zoneRepository, cityRepository)
 
 	cityHandler := handler.NewCityHandler(cityService)
 	storeHandler := handler.NewStoreHandler(storeService)
+	zoneHandler := handler.NewZoneHandler(zoneService)
 
 	omsRoutes := e.Group("/oms")
 
@@ -47,4 +50,14 @@ func InitRoutes(e *gin.Engine) {
 		storeRoutes.PUT("/:id", storeHandler.UpdateStore)
 		storeRoutes.DELETE("/:id", storeHandler.DeleteStore)
 	}
+
+	zoneRoutes := omsRoutes.Group("/zones")
+	{
+		zoneRoutes.POST("", zoneHandler.CreateZone)
+		zoneRoutes.GET("", zoneHandler.GetAllZones)
+		zoneRoutes.GET("/:id", zoneHandler.GetZoneByID)
+		zoneRoutes.PUT("/:id", zoneHandler.UpdateZone)
+		zoneRoutes.DELETE("/:id", zoneHandler.DeleteZone)
+	}
+
 }
