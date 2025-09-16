@@ -22,11 +22,45 @@ const (
 )
 
 func getSQLDir() string {
-	// Get the path to the current file
-	_, filename, _, _ := runtime.Caller(0)
+	// Try multiple possible paths for better Docker compatibility
+	possiblePaths := []string{
+		// Path relative to the current file (your original approach)
+		func() string {
+			_, filename, _, _ := runtime.Caller(0)
+			return filepath.Join(filepath.Dir(filename), "sql")
+		}(),
 
-	// Navigate to the sql directory which is in the same directory as this file
+		// Path relative to working directory (Docker container)
+		"./migration/sql",
+		"/app/migration/sql",
+
+		// Path relative to executable
+		func() string {
+			ex, err := os.Executable()
+			if err != nil {
+				return ""
+			}
+			return filepath.Join(filepath.Dir(ex), "migration", "sql")
+		}(),
+	}
+
+	// Try each path and use the first one that exists
+	for _, path := range possiblePaths {
+		if path == "" {
+			continue
+		}
+
+		if info, err := os.Stat(path); err == nil && info.IsDir() {
+			log.Printf("Using SQL migration directory: %s", path)
+			return path
+		}
+		log.Printf("Tried SQL directory path: %s (not found)", path)
+	}
+
+	// Fallback to original approach
+	_, filename, _, _ := runtime.Caller(0)
 	sqlDir := filepath.Join(filepath.Dir(filename), "sql")
+	log.Printf("Falling back to SQL directory: %s", sqlDir)
 	return sqlDir
 }
 
@@ -290,6 +324,13 @@ var AllMigrations = []Migration{
 		Up: func(ctx context.Context, db *gorm.DB) error {
 			manager := NewMigrationManager(db)
 			return manager.applyMigration(ctx, "0001_initial_database_setup", db)
+		},
+	},
+	{
+		Version: "0002_seed_data",
+		Up: func(ctx context.Context, db *gorm.DB) error {
+			manager := NewMigrationManager(db)
+			return manager.applyMigration(ctx, "0002_seed_data", db)
 		},
 	},
 }

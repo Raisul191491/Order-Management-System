@@ -13,8 +13,11 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
-# Copy source code (excluding .env via .dockerignore)
+# Copy source code
 COPY . .
+
+# Copy .env file
+COPY .env .
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
@@ -30,11 +33,14 @@ WORKDIR /root/
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
+
+# Copy the entire migration directory structure
 COPY --from=builder /app/migration ./migration
+
 COPY --from=builder /app/.env .
 
 # Expose port
-EXPOSE 8089
+EXPOSE 6969
 
 # Run the application
 CMD ["./main"]
