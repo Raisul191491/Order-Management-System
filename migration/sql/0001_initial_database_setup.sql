@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Stores table (referenced in orders)
 CREATE TABLE IF NOT EXISTS stores (
-                        id BIGINT PRIMARY KEY,
+                        id BIGSERIAL PRIMARY KEY,
                         name VARCHAR(255) NOT NULL,
                         contact_phone VARCHAR(20),
                         address TEXT,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS stores (
 
 -- Cities table for delivery locations
 CREATE TABLE IF NOT EXISTS cities (
-                        id BIGINT PRIMARY KEY,
+                        id BIGSERIAL PRIMARY KEY,
                         name VARCHAR(100) NOT NULL,
                         base_delivery_fee DECIMAL(10,2) DEFAULT 100.00,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS cities (
 
 -- Zones table (districts within cities)
 CREATE TABLE IF NOT EXISTS zones (
-                       id BIGINT PRIMARY KEY,
+                       id BIGSERIAL PRIMARY KEY,
                        city_id BIGINT REFERENCES cities(id),
                        name VARCHAR(100) NOT NULL,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS zones (
 
 -- Item types lookup (keeping as table since these might vary more)
 CREATE TABLE IF NOT EXISTS item_types (
-                            id BIGINT PRIMARY KEY,
+                            id BIGSERIAL PRIMARY KEY,
                             name VARCHAR(50) NOT NULL,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS item_types (
 
 -- Delivery types lookup (keeping as table for flexibility)
 CREATE TABLE IF NOT EXISTS delivery_types (
-                                id BIGINT PRIMARY KEY,
+                                id BIGSERIAL PRIMARY KEY,
                                 name VARCHAR(50) NOT NULL,
                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
