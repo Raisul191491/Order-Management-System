@@ -109,5 +109,10 @@ func (cs cityService) UpdateCity(city types.CityUpdateRequest) error {
 }
 
 func (cs cityService) DeleteCity(id int64) error {
+	existingCity, err := cs.cityRepository.GetCityByID(id)
+	if err != nil || existingCity.ID == 0 {
+		return fmt.Errorf("city does not exist")
+	}
+
 	return cs.cityRepository.DeleteCity(id)
 }
