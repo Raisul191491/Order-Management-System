@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"oms/model"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -16,9 +18,17 @@ import (
 )
 
 const (
-	sqlDir           = "./sql"
 	migrationTimeout = 30 * time.Minute
 )
+
+func getSQLDir() string {
+	// Get the path to the current file
+	_, filename, _, _ := runtime.Caller(0)
+
+	// Navigate to the sql directory which is in the same directory as this file
+	sqlDir := filepath.Join(filepath.Dir(filename), "sql")
+	return sqlDir
+}
 
 // Migration represents a single database migration
 type Migration struct {
@@ -26,16 +36,10 @@ type Migration struct {
 	Up      func(context.Context, *gorm.DB) error
 }
 
-// MigrationRecord tracks applied migrations in the database
-type MigrationRecord struct {
-	Version   string    `gorm:"primaryKey;size:255"`
-	AppliedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP"`
-}
-
-// TableName sets the table name for MigrationRecord
-func (MigrationRecord) TableName() string {
-	return "schema_migrations"
-}
+//// TableName sets the table name for MigrationRecord
+//func (MigrationRecord) TableName() string {
+//	return "schema_migrations"
+//}
 
 // MigrationManager handles database migrations
 type MigrationManager struct {
@@ -47,7 +51,7 @@ type MigrationManager struct {
 func NewMigrationManager(db *gorm.DB) *MigrationManager {
 	return &MigrationManager{
 		db:     db,
-		sqlDir: sqlDir,
+		sqlDir: getSQLDir(),
 	}
 }
 
@@ -65,7 +69,7 @@ func (m *MigrationManager) createMigrationFunc(version string) func(context.Cont
 
 // applyMigration applies a single migration by reading and executing SQL file
 func (m *MigrationManager) applyMigration(ctx context.Context, version string, db *gorm.DB) error {
-	statements, err := m.readSQLFile(ctx, version)
+	statements, err := m.readSQLFile(version)
 	if err != nil {
 		return fmt.Errorf("failed to read migration %s: %w", version, err)
 	}
@@ -80,7 +84,7 @@ func (m *MigrationManager) applyMigration(ctx context.Context, version string, d
 }
 
 // readSQLFile reads and parses SQL file into individual statements
-func (m *MigrationManager) readSQLFile(ctx context.Context, version string) ([]string, error) {
+func (m *MigrationManager) readSQLFile(version string) ([]string, error) {
 	filename := fmt.Sprintf("%s.sql", version)
 	filePath := filepath.Join(m.sqlDir, filename)
 
@@ -103,33 +107,48 @@ func (m *MigrationManager) readSQLFile(ctx context.Context, version string) ([]s
 	return statements, nil
 }
 
-// parseSQLStatements splits SQL content into individual statements
 func (m *MigrationManager) parseSQLStatements(content string) []string {
-	// Split by semicolon, but be smarter about it
-	rawStatements := strings.Split(content, ";")
 	var statements []string
+	var currentStatement strings.Builder
+	inParentheses := false
 
-	for _, stmt := range rawStatements {
-		// Clean up the statement
-		cleaned := strings.TrimSpace(stmt)
+	lines := strings.Split(content, "\n")
 
-		// Skip empty statements and comments
-		if cleaned == "" || strings.HasPrefix(cleaned, "--") {
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		// Skip comment lines
+		if strings.HasPrefix(trimmed, "--") || trimmed == "" {
 			continue
 		}
 
-		// Remove single-line comments from the statement
-		lines := strings.Split(cleaned, "\n")
-		var cleanLines []string
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line != "" && !strings.HasPrefix(line, "--") {
-				cleanLines = append(cleanLines, line)
-			}
+		// Check if we're entering or exiting parentheses
+		if strings.Contains(trimmed, "(") {
+			inParentheses = true
+		}
+		if strings.Contains(trimmed, ")") {
+			inParentheses = false
 		}
 
-		if len(cleanLines) > 0 {
-			statements = append(statements, strings.Join(cleanLines, "\n"))
+		// Add line to current statement
+		currentStatement.WriteString(trimmed)
+		currentStatement.WriteString(" ")
+
+		// If we find a semicolon and we're not inside parentheses, finalize the statement
+		if strings.Contains(trimmed, ";") && !inParentheses {
+			stmt := strings.TrimSpace(currentStatement.String())
+			if stmt != "" {
+				statements = append(statements, stmt)
+			}
+			currentStatement.Reset()
+		}
+	}
+
+	// Add any remaining statement
+	if currentStatement.Len() > 0 {
+		stmt := strings.TrimSpace(currentStatement.String())
+		if stmt != "" {
+			statements = append(statements, stmt)
 		}
 	}
 
@@ -170,7 +189,7 @@ func (m *MigrationManager) execSQL(ctx context.Context, db *gorm.DB, sql string)
 
 // getAppliedMigrations retrieves all applied migrations from database
 func (m *MigrationManager) getAppliedMigrations(ctx context.Context) (map[string]bool, error) {
-	var appliedMigrations []MigrationRecord
+	var appliedMigrations []model.MigrationRecord
 
 	result := m.db.WithContext(ctx).Find(&appliedMigrations)
 	if result.Error != nil {
@@ -187,7 +206,7 @@ func (m *MigrationManager) getAppliedMigrations(ctx context.Context) (map[string
 
 // recordMigration saves a migration record to the database
 func (m *MigrationManager) recordMigration(ctx context.Context, tx *gorm.DB, version string) error {
-	record := MigrationRecord{
+	record := model.MigrationRecord{
 		Version:   version,
 		AppliedAt: time.Now(),
 	}
@@ -206,7 +225,7 @@ func (m *MigrationManager) Migrate(ctx context.Context) error {
 	defer cancel()
 
 	// Ensure migrations table exists
-	if err := m.db.WithContext(migrationCtx).AutoMigrate(&MigrationRecord{}); err != nil {
+	if err := m.db.WithContext(migrationCtx).AutoMigrate(&model.MigrationRecord{}); err != nil {
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
 

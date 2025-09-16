@@ -1,8 +1,12 @@
 package connection
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"oms/config"
+	migrations "oms/migration"
+	"oms/model"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -11,8 +15,8 @@ import (
 )
 
 func InitDB(cfg config.Config) (*gorm.DB, *gorm.DB) {
-	readDataSourceName := cfg.GetReadDSN()
-	writeDataSourceName := cfg.GetWriteDSN()
+	readDataSourceName := GetReadDSN(cfg)
+	writeDataSourceName := GetWriteDSN(cfg)
 
 	// Connect to the master database
 	masterDB, err := gorm.Open(postgres.New(postgres.Config{
@@ -71,5 +75,22 @@ func InitDB(cfg config.Config) (*gorm.DB, *gorm.DB) {
 	log.Printf("Replica DB - Open connections: %d, Idle connections: %d",
 		sqlReplicaDB.Stats().OpenConnections, sqlReplicaDB.Stats().Idle)
 
+	masterDB.AutoMigrate(&model.MigrationRecord{})
+
+	err = migrations.Migrate(context.Background(), masterDB)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return masterDB, replicaDB
+}
+
+func GetReadDSN(c config.Config) string {
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.DBHostRead, c.DBPortRead, c.DBUserRead, c.DBPassword, c.DBName)
+}
+
+func GetWriteDSN(c config.Config) string {
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.DBHostWrite, c.DBPortWrite, c.DBUserWrite, c.DBPassword, c.DBName)
 }

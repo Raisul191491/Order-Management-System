@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -28,7 +27,7 @@ type Config struct {
 	RedisPort           string        `mapstructure:"REDIS_PORT"`
 }
 
-func LoadConfig() (config *Config) {
+func LoadConfig() *Config {
 	viper.SetConfigFile(".env")
 	viper.SetConfigType("env")
 	viper.AddConfigPath(".")
@@ -39,19 +38,9 @@ func LoadConfig() (config *Config) {
 		log.Fatal("Error reading env file", err)
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(&Conf); err != nil {
 		log.Fatal("Error reading env file", err)
 	}
 
-	return
-}
-
-func (c *Config) GetReadDSN() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		c.DBHostRead, c.DBPortRead, c.DBUserRead, c.DBPassword, c.DBName)
-}
-
-func (c *Config) GetWriteDSN() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		c.DBHostWrite, c.DBPortWrite, c.DBUserWrite, c.DBPassword, c.DBName)
+	return &Conf
 }
